@@ -1,0 +1,19 @@
+{
+  "name": "lemon-server",
+  "version": "0.0.1",
+  "description": "Back-end for Lemon🍋",
+  "main": "src/main.js",
+  "scripts": {
+    "test": "node test/server/serverTest.js",
+    "start": "node src/main.js",
+    "testServer": "node src/testServer.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com//AlmostGreatBand/lemon-server"
+  },
+  "keywords": [
+    "lemon"
+  ],
+  "author": "AlmostGreatBand"
+}
