@@ -107,5 +107,5 @@ dist
 .idea
 
 # Certificates and keys
-src/cert.pem
-src/key.pem
+cert.pem
+key.pem
