@@ -1,8 +1,5 @@
 'use strict';
 
-// TODO: Add implementation of test server with Lemon API listening on localhost
-// Test server can be run by 'npm run testServer' command (see package.json).
-
 const https = require('https');
 const fs = require('fs');
 const url = require('url');
@@ -24,7 +21,7 @@ const db = {
     name: 'Valera',
     login: 'valera_test',
     password: 'test'
-  },],
+  }],
   banks: [{
     id: 353,
     account: 1,
@@ -52,7 +49,7 @@ const db = {
   cards: [{
     id: 321,
     bank: 353,
-    card_num: 1234,
+    num: 1234,
     type: 'black',
     balance: 3333,
     currency: 'UAH',
@@ -61,7 +58,7 @@ const db = {
   {
     id: 504,
     bank: 420,
-    card_num: 4433,
+    num: 4433,
     type: 'universal',
     balance: 420,
     currency: 'UAH',
@@ -70,7 +67,7 @@ const db = {
   {
     id: 657,
     bank: 786,
-    card_num: 1111,
+    num: 1111,
     type: 'cash',
     balance: 420,
     currency: 'UAH',
@@ -110,7 +107,7 @@ const getBanks = accId => {
   const banks = [];
   for (const bank of db.banks) {
     if (bank.account === accId) banks.push(bank);
-  };
+  }
   return banks;
 };
 const getCards = accId => {
@@ -120,7 +117,7 @@ const getCards = accId => {
     for (const bank of banks) {
       if (card.bank === bank.id) cards.push(card);
     }
-  };
+  }
   return cards;
 };
 
@@ -132,18 +129,24 @@ const getTransactions = cards => {
         transactions.push(transaction);
       }
     }
-  };
+  }
   return transactions;
 };
 
 const authentificate = (login, password) => {
-  if (!login || !password)
-    return { err: '<h1>&#127819Login and password should be specified</h1>', account: null };
+  if (!login || !password) return { 
+    err: '<h1>&#127819Login and password should be specified</h1>',
+    account: null
+  };
   const account = getAccount(login);
-  if (!account)
-    return { err: '<h1>&#127819Incorrect login entered :(</h1>', account: null };
-  if (password !== account.password)
-    return { err: '<h1>&#127819Incorrect password entered :(</h1>', account: null };
+  if (!account) return {
+    err: '<h1>&#127819Incorrect login entered :(</h1>',
+    account: null 
+  };
+  if (password !== account.password) return { 
+    err: '<h1>&#127819Incorrect password entered :(</h1>', 
+    account: null 
+  };
   return { err: null, account: account };
 };
 
@@ -155,7 +158,7 @@ const profileHandler = (req, res) => {
     res.writeHead(403);
     res.end(err);
     return null;
-  };
+  }
   return account;
 };
 
@@ -192,7 +195,7 @@ const server = https.createServer(options, (req, res) => {
   if (!handler) {
     res.writeHead(404);
     return res.end('<h1>&#127819Page not found :(</h1>');
-  };
+  }
   const data = handler(req, res);
   if (!data) return;
   res.writeHead(200);
