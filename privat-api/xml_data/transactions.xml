@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<request version="1.0">
+    <merchant>
+        <id></id>
+        <signature></signature>
+    </merchant>
+    <data>
+        <oper>cmt</oper>
+        <wait></wait>
+        <test></test>
+        <payment id="">
+            <prop name="sd" value=""></prop>
+            <prop name="ed" value=""></prop>
+            <prop name="card" value=""></prop>
+        </payment>
+    </data>
+</request>
