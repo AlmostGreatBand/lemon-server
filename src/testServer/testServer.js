@@ -2,7 +2,7 @@
 
 const https = require('https');
 const fs = require('fs');
-const url = require('url');
+const { URL } = require('url');
 
 const options = {
   key: fs.readFileSync('key.pem'),
@@ -16,7 +16,7 @@ const normalizePath = pathname => (
 );
 
 const server = https.createServer(options, (req, res) => {
-  const { pathname } = url.parse(req.url, true);
+  const { pathname } = new URL(req.url, 'https://localhost:8000/');
   const handler = routing[normalizePath(pathname)];
   if (!handler) {
     res.writeHead(404);

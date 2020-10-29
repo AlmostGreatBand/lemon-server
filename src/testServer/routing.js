@@ -1,6 +1,6 @@
 'use strict';
 
-const url = require('url');
+const { URL } = require('url');
 const databaseInterface = require('./dbInterface.js');
 
 const authentificate = (login, password) => {
@@ -21,8 +21,9 @@ const authentificate = (login, password) => {
 };
 
 const profileHandler = (req, res) => {
-  const login = url.parse(req.url, true).query.login; //const login = req.getHeader('login');
-  const password = url.parse(req.url, true).query.password; //const password = req.getHeader('password');
+  const url = new URL(req.url, 'https://localhost:8000/');
+  const login = url.searchParams.get('login'); //const login = req.getHeader('login');
+  const password = url.searchParams.get('password'); //const password = req.getHeader('password');
   const { err, account } = authentificate(login, password);
   if (err) {
     res.writeHead(403);
