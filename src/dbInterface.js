@@ -2,42 +2,22 @@
 
 const db = require('./db.js');
 
-const getAccount = login => {
-  for (const acc of db.accounts) {
-    if (acc.login === login) return acc;
-  }
-  return null;
-};
+const getAccount = login => (
+  db.accounts.find(acc => acc.login === login)
+);
 
-const getBanks = accId => {
-  const banks = [];
-  for (const bank of db.banks) {
-    if (bank.account === accId) banks.push(bank);
-  }
-  return banks;
-};
+const getBanks = accId => (
+  db.banks.filter(bank => bank.account === accId)
+);
 
 const getCards = accId => {
-  const banks = getBanks(accId);
-  const cards = [];
-  for (const card of db.cards) {
-    for (const bank of banks) {
-      if (card.bank === bank.id) cards.push(card);
-    }
-  }
-  return cards;
+  const bankIds = getBanks(accId).map(bank => bank.id);
+  return db.cards.filter(card => bankIds.includes(card.bank));
 };
 
 const getTransactions = cards => {
-  const transactions = [];
-  for (const transaction of db.transactions) {
-    for (const card of cards) {
-      if (transaction.card === card.id) {
-        transactions.push(transaction);
-      }
-    }
-  }
-  return transactions;
+  const cardIds = cards.map(card => card.id);
+  return db.transactions.filter(trans => cardIds.includes(trans.card));
 };
 
 module.exports = { getAccount, getCards, getTransactions };
