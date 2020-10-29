@@ -1,0 +1,8 @@
+#!/bin/bash
+
+npm run test
+
+if [[ $? != 0 ]] ; then
+  echo "🚫🚫🚫 Tests failed, git push denied!"
+  exit 1
+fi
