@@ -5,3 +5,7 @@ report.[0-9]*.[0-9]*.[0-9]*.[0-9]*.json
 node_modules/
 # Intellij IDEA files
 .idea
+
+# Certificates and keys
+cert.pem
+key.pem
