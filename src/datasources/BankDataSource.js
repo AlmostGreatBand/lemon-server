@@ -4,10 +4,9 @@
 class BankDataSource {
   /** Obtains transactions from card
    * @param {Card} card - get transactions from or to this card
-   * @param {Date} from - date of the earliest possible transaction
-   * @param {Date} to - date of the latest possible transaction
+   * @param {Object} conf - object with configuration fields: from, to, etc
    * @return {Array<Transaction>} */
-  getTransactions(card, from, to) {
+  getTransactions(card, conf) {
     throw new Error('Not implemented');
   }
 }
