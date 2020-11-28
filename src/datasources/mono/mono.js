@@ -1,7 +1,7 @@
 'use strict'; 
 
 const http = require('https');
-const BankDataSource = require('../BankDataSource')
+const BankDataSource = require('../BankDataSource');
 
 class MonoDataSource extends BankDataSource {
     static #ROUTES = {
@@ -25,7 +25,7 @@ class MonoDataSource extends BankDataSource {
         else {
             const errMessage = 'Error: account or from-date is not specified';
             console.log(errMessage);
-            throw new Error(errMessage)
+            throw new Error(errMessage);
         }
     }
 
@@ -44,22 +44,22 @@ class MonoDataSource extends BankDataSource {
                 'Content-Type': 'application/json; charset=UTF-8',
             }
         };
-        return http.request(options)
+        return http.request(options);
     }
 
     #getData = async (path) => {
         console.log(this.token);
-        const req = this.#makeRequest(path)
+        const req = this.#makeRequest(path);
         console.log(req);
         req.on('response', res => {
             if (res.statusCode !== 200) {
                 const errMessage = `Error: code ${res.statusCode} message: ${res.statusMessage}`;
                 console.log(errMessage);
-                throw new Error(errMessage)
+                throw new Error(errMessage);
             } else {
                 let stream = '';
                 res.on('data', chunk => {
-                    stream += chunk
+                    stream += chunk;
                 });
 
                 res.on('end', () => {
@@ -70,7 +70,7 @@ class MonoDataSource extends BankDataSource {
                     } catch(e) {
                         const errMessage = `Error: something went wront while trying to parse data: ${e}`;
                         console.log(errMessage);
-                        throw new Error(errMessage)
+                        throw new Error(errMessage);
                     }
                 })
             }
@@ -98,4 +98,4 @@ const monoDS = new MonoDataSource('uMLmvCFm6kA4N8mrflxayXMcZPqFUrxpm9q_CxBsMkaY'
     const transactions = await monoDS.getTransactions(0, new Date(2020, 10, 15), new Date(2020, 10, 26));
 })();
 
-module.exports = MonoDataSource
+module.exports = MonoDataSource;
