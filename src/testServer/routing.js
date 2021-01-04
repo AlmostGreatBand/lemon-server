@@ -20,10 +20,9 @@ const authentificate = (login, password) => {
   return { err: null, account };
 };
 
-const profileHandler = (req, res) => {
-  const url = new URL(req.url, 'https://localhost:8000/');
-  const login = url.searchParams.get('login'); //const login = req.getHeader('login');
-  const password = url.searchParams.get('password'); //const password = req.getHeader('password');
+const profileHandler = (credentials, res) => {
+  const login = credentials[0];
+  const password = credentials[1];
   const { err, account } = authentificate(login, password);
   if (err) {
     res.writeHead(403);
@@ -33,15 +32,15 @@ const profileHandler = (req, res) => {
   return account;
 };
 
-const cardsHandler = (req, res) => {
-  const account = profileHandler(req, res);
+const cardsHandler = (credentials, res) => {
+  const account = profileHandler(credentials, res);
   if (!account) return null;
   const cards = databaseInterface.getCards(account.id);
   return cards;
 };
 
-const transactionsHandler = (req, res) => {
-  const cards = cardsHandler(req, res);
+const transactionsHandler = (credentials, res) => {
+  const cards = cardsHandler(credentials, res);
   if (!cards) return null;
   const transactions = databaseInterface.getTransactions(cards);
   return transactions;
@@ -50,9 +49,9 @@ const transactionsHandler = (req, res) => {
 const routing = {
   '/': () => '<h1>Welcome to Lemon&#127819 Server!</h1>',
   '/favicon.ico/': () => {}, //Debug, never mind
-  '/profile/': (req, res) => profileHandler(req, res),
-  '/cards/': (req, res) => cardsHandler(req, res),
-  '/transactions/': (req, res) => transactionsHandler(req, res),
+  '/profile/': (credentials, res) => profileHandler(credentials, res),
+  '/cards/': (credentials, res) => cardsHandler(credentials, res),
+  '/transactions/': (credentials, res) => transactionsHandler(credentials, res),
   '/registration/': () => '<h1>&#127819Registration process will be here</h1>',
 };
 
