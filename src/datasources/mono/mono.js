@@ -23,14 +23,14 @@ class MonoDataSource extends BankDataSource {
             return this.#getData(queryString);
         } else {
             const errMessage = 'Error: account or from-date is not specified';
-            console.log(errMessage);
+            console.error(errMessage);
             throw new Error(errMessage);
         }
     }
 
-    async getAccounts(token) {
+    async getAccounts() {
         const queryString = MonoDataSource.#ROUTES.personalInfo;
-        return this.#getData(queryString, token);
+        return this.#getData(queryString);
     }
 
     #makeRequest = (path) => {
@@ -51,7 +51,7 @@ class MonoDataSource extends BankDataSource {
         req.on('response', res => {
             if (res.statusCode !== 200) {
                 const errMessage = `Error: code ${res.statusCode} message: ${res.statusMessage}`;
-                console.log(errMessage);
+                console.error(errMessage);
                 reject(errMessage);
             } else {
                 let stream = '';
@@ -64,7 +64,7 @@ class MonoDataSource extends BankDataSource {
                         resolve(JSON.parse(stream));
                     } catch(e) {
                         const errMessage = `Error: something went wront while trying to parse data: ${e}`;
-                        console.log(errMessage);
+                        console.error(errMessage);
                         reject(errMessage);
                     }
                 })
@@ -74,11 +74,11 @@ class MonoDataSource extends BankDataSource {
         req.on('error', err => {
             try {
                 const e = JSON.parse(err);
-                console.log(`Error: ${e.errorDescription}`);
+                console.error(`Error: ${e.errorDescription}`);
                 reject(e.errorDescription);
             } catch(e) {
                 const errMessage = `Error: something went wront while trying to parse err: ${e}`;
-                console.log(errMessage);
+                console.error(errMessage);
                 reject(errMessage);
             }
         }); 
