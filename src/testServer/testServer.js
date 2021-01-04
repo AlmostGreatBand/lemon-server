@@ -19,15 +19,16 @@ const authorizeUser = (req, res) => {
   const { authorization } = req.headers;
   if (!authorization) {
     res.setHeader(
-      'WWW_Authenticate', 
-      [ 'type=Basic', 'realm="Lemon"', 'charset="UTF-8"' ]
+      'WWW-Authenticate',
+      [ 'Basic', 'realm="Lemon"', 'charset="UTF-8"' ]
     );
     res.writeHead(401);
     res.end('<h1>&#127819You should authorize to access the site</h1>');
     return null;
   }
   const credentialsBase64 = authorization.split(' ')[1];
-  const credentialsASCII = Buffer.from(credentialsBase64, 'base64').toString('ascii');
+  const credentialsASCII = Buffer.from(credentialsBase64, 'base64')
+    .toString('ascii');
   return credentialsASCII.split(':');
 };
 
