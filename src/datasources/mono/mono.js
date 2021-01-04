@@ -21,8 +21,7 @@ class MonoDataSource extends BankDataSource {
 
         if (account !== undefined && from !== undefined) {
             return this.#getData(queryString);
-        }
-        else {
+        } else {
             const errMessage = 'Error: account or from-date is not specified';
             console.log(errMessage);
             throw new Error(errMessage);
@@ -47,15 +46,13 @@ class MonoDataSource extends BankDataSource {
         return http.request(options);
     }
 
-    #getData = async (path) => {
-        console.log(this.token);
+    #getData = async (path) => new Promise((resolve, reject) => {
         const req = this.#makeRequest(path);
-        console.log(req);
         req.on('response', res => {
             if (res.statusCode !== 200) {
                 const errMessage = `Error: code ${res.statusCode} message: ${res.statusMessage}`;
                 console.log(errMessage);
-                throw new Error(errMessage);
+                reject(errMessage);
             } else {
                 let stream = '';
                 res.on('data', chunk => {
@@ -64,13 +61,11 @@ class MonoDataSource extends BankDataSource {
 
                 res.on('end', () => {
                     try {
-                        const data = JSON.parse(stream);
-                        console.log(data);
-                        return data;
+                        resolve(JSON.parse(stream));
                     } catch(e) {
                         const errMessage = `Error: something went wront while trying to parse data: ${e}`;
                         console.log(errMessage);
-                        throw new Error(errMessage);
+                        reject(errMessage);
                     }
                 })
             }
@@ -78,24 +73,18 @@ class MonoDataSource extends BankDataSource {
     
         req.on('error', err => {
             try {
-                console.log(err.toString());
                 const e = JSON.parse(err);
                 console.log(`Error: ${e.errorDescription}`);
-                return e;
+                reject(e.errorDescription);
             } catch(e) {
-                console.log(`Error: something went wront while trying to parse err: ${e}`);
+                const errMessage = `Error: something went wront while trying to parse err: ${e}`;
+                console.log(errMessage);
+                reject(errMessage);
             }
         }); 
 
         req.end();
-    };
+    });
 }
-
-// Usage
-
-const monoDS = new MonoDataSource('uMLmvCFm6kA4N8mrflxayXMcZPqFUrxpm9q_CxBsMkaY');
-(async () => {
-    const transactions = await monoDS.getTransactions(0, new Date(2020, 10, 15), new Date(2020, 10, 26));
-})();
 
 module.exports = MonoDataSource;
