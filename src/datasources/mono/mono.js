@@ -1,4 +1,4 @@
-'use strict'; 
+'use strict';
 
 const http = require('https');
 const BankDataSource = require('../BankDataSource');

@@ -16,12 +16,8 @@
   "keywords": [
     "lemon"
   ],
-<<<<<<< HEAD
-  "author": "AlmostGreatBand"
-=======
   "author": "AlmostGreatBand",
   "devDependencies": {
     "eslint": "^7.17.0"
   }
->>>>>>> 870b9dc9b9401ba474d5fa65ef3d091af8e4344d
 }
