@@ -1,11 +1,9 @@
-'use strict';
-
 const fs = require('fs');
 const xmlJs = require('xml-js');
 const balanceXML = fs.readFileSync('./xml_data/balance.xml', 'utf-8');
 
 const fillBalanceXml = dataForBalance => {
-  const xmlObj = xmlJs.xml2js(balanceXML, {compact: true});
+  const xmlObj = xmlJs.xml2js(balanceXML, { compact: true });
 
   const xmlMerchant = xmlObj.request.merchant;
   xmlMerchant.id._text = dataForBalance.merchantId;
@@ -22,11 +20,11 @@ const fillBalanceXml = dataForBalance => {
   xmlCountry._attributes.value = dataForBalance.country;
 
   const xmlWithData = xmlJs.js2xml(xmlObj, {
-    spaces: 0, 
-    compact: true, 
+    spaces: 0,
+    compact: true,
     fullTagEmptyElement: true
   });
   return xmlWithData;
 };
 
-module.exports = {fillBalanceXml};
+module.exports = { fillBalanceXml };

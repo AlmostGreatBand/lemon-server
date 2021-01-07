@@ -1,13 +1,11 @@
-'use strict';
-
 const http = require('https');
 const xmlJs = require('xml-js');
 const crypto = require('crypto');
-const {fillTransactionsXml} = require('./utils/transactions');
-const {fillBalanceXml} = require('./utils/balance');
+const { fillTransactionsXml } = require('./utils/transactions');
+const { fillBalanceXml } = require('./utils/balance');
 const {
-  stringToDate, 
-  dateToString, 
+  stringToDate,
+  dateToString,
   divideIntoPeriods
 } = require('./utils/dates');
 
@@ -24,14 +22,14 @@ const createSignature = (xml, password) => {
 };
 
 const fillXmlWithSignature = (xml, signature) => {
-  const xmlObj = xmlJs.xml2js(xml, {compact: true});
+  const xmlObj = xmlJs.xml2js(xml, { compact: true });
 
   const xmlMerchant = xmlObj.request.merchant;
   xmlMerchant.signature._text = signature;
 
   const xmlWithSignature = xmlJs.js2xml(xmlObj, {
-    spaces: 0, 
-    compact: true, 
+    spaces: 0,
+    compact: true,
     fullTagEmptyElement: true
   });
   return xmlWithSignature;
@@ -39,12 +37,12 @@ const fillXmlWithSignature = (xml, signature) => {
 
 const handleBankResponse = (cb, resolve, reject, res) => {
   let data = '';
-  if (res.statusCode != 200) {
+  if (res.statusCode !== 200) {
     const errMsg = `Server did not send data. STATUS CODE: ${res.statusCode}`;
     reject(new Error(errMsg));
   }
   res.setEncoding('utf8');
-  res.on('data', (chunk) => {
+  res.on('data', chunk => {
     data += chunk;
   });
   res.on('end', () => {
@@ -56,13 +54,13 @@ const handleBankResponse = (cb, resolve, reject, res) => {
 const handleTransactionsData = (resolve, reject, dataXml) => {
   let dataObj;
   try {
-    dataObj = xmlJs.xml2js(dataXml, {compact: true});
+    dataObj = xmlJs.xml2js(dataXml, { compact: true });
   } catch (err) {
     reject(new Error(err));
     return;
   }
 
-  if (dataObj.response.data.error != null) {
+  if (dataObj.response.data.error !== null) {
     const errorMessage = dataObj.response.data.error._attributes.message;
     reject(new Error(errorMessage));
     return;
@@ -78,13 +76,13 @@ const handleTransactionsData = (resolve, reject, dataXml) => {
 const handleBalanceData = (resolve, reject, dataXml) => {
   let dataObj;
   try {
-    dataObj = xmlJs.xml2js(dataXml, {compact: true});
+    dataObj = xmlJs.xml2js(dataXml, { compact: true });
   } catch (err) {
     reject(new Error('Invalid XML'));
     return;
   }
 
-  if (dataObj.response.data.error != null) {
+  if (dataObj.response.data.error !== null) {
     const errorMessage = dataObj.response.data.error._attributes.message;
     reject(new Error(errorMessage));
     return;
@@ -104,21 +102,21 @@ const handleBalanceData = (resolve, reject, dataXml) => {
 };
 
 const getData = (dataForRequest, cb) => {
-  const path = cb.name === 'handleTransactionsData' ? '/p24api/rest_fiz'
-    : cb.name === 'handleBalanceData' ? '/p24api/balance' 
-      : null;
+  const path = cb.name === 'handleTransactionsData' ? '/p24api/rest_fiz' :
+    cb.name === 'handleBalanceData' ? '/p24api/balance' :
+      null;
   const options = {
     hostname: 'api.privatbank.ua',
-    path: path,
+    path,
     method: 'POST',
     headers:
-        {'Content-Type': 'application/xml; charset=UTF-8'}
+        { 'Content-Type': 'application/xml; charset=UTF-8' }
   };
   const req = http.request(options);
-  const xml = cb.name === 'handleTransactionsData' ? 
-    fillTransactionsXml(dataForRequest)
-    : cb.name === 'handleBalanceData' ? fillBalanceXml(dataForRequest) 
-      : null;
+  const xml = cb.name === 'handleTransactionsData' ?
+    fillTransactionsXml(dataForRequest) :
+    cb.name === 'handleBalanceData' ? fillBalanceXml(dataForRequest) :
+      null;
 
   const signature = createSignature(xml, dataForRequest.merchantPassword);
   const xmlWithSignature = fillXmlWithSignature(xml, signature);
@@ -149,7 +147,7 @@ const getTransactionsData = async dataForTransactions => {
   let result = [];
   for (const array of transactions) result = [...result, ...array.reverse()];
 
-  return {transactions: result};
+  return { transactions: result };
 };
 
 const getBalanceData = async dataForBalance => {

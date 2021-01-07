@@ -1,13 +1,10 @@
-'use strict';
-
 const stringToDate = date => {
   const [day, month, year] = date.split('.');
   return new Date(`${year}-${month}-${day}`);
 };
 
-const dateToString = date => {
-  return `${date.getDate()}.${date.getMonth() + 1}.${date.getFullYear()}`;
-};
+const dateToString = date =>
+  `${date.getDate()}.${date.getMonth() + 1}.${date.getFullYear()}`;
 
 const divideIntoPeriods = (startDate, endDate) => {
   const periods = [];
@@ -27,4 +24,4 @@ const divideIntoPeriods = (startDate, endDate) => {
   return periods;
 };
 
-module.exports = {stringToDate, dateToString, divideIntoPeriods};
+module.exports = { stringToDate, dateToString, divideIntoPeriods };
