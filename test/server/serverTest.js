@@ -9,14 +9,18 @@ const options = {
   ca: [ fs.readFileSync('cert.pem') ],
 };
 const paths = [ 'profile/', 'cards/', 'transactions/', 'profile' ];
+
+const testCase = (credentials, code, expected) => (
+  { credentials, code, expected }
+);
 const tests = [
-  ['alegator:good_job', 200, ''],
-  ['Anauthorized', 401, '<h1>&#127819You should authorize to access the site</h1>'],
-  [':', 401, '<h1>&#127819Login and password should be specified</h1>'],
-  ['alegator:', 401, '<h1>&#127819Login and password should be specified</h1>'],
-  [':good_job', 401, '<h1>&#127819Login and password should be specified</h1>'],
-  ['saym:onloh', 403, '<h1>&#127819Incorrect login entered :(</h1>'],
-  ['alegator:bad_job', 403, '<h1>&#127819Incorrect password entered :(</h1>'],
+  testCase('alegator:good_job', 200, ''),
+  testCase('Anauthorized', 401, 'You should authorize to access the site'),
+  testCase(':', 401, 'Login and password should be specified'),
+  testCase('alegator:', 401, 'Login and password should be specified'),
+  testCase(':good_job', 401, 'Login and password should be specified'),
+  testCase('saym:onloh', 403, 'Incorrect login entered :('),
+  testCase('alegator:bad_job', 403, 'Incorrect password entered :('),
 ];
 
 const getOptionsWithAuthorization = credentials => {
@@ -41,7 +45,7 @@ const checkStatusCode = (statusCode, expectedCode, path, credentials) => {
 
 const checkMsg = (msg, expected, path, credentials) => {
   assert.strictEqual(
-    msg.toString(), expected, 
+    msg.toString(), `<h1>&#127819${expected}</h1>`, 
     `Wrong error msg, expected ${expected}, got ${msg}
     Path: ${path}
     Credentials: ${credentials}`
@@ -58,7 +62,7 @@ const logSuccess = (path, credentials, statusCode, msg) => {
 const testPath = path => {
   const fullPath = url + path;
   for (const test of tests) {
-    const [ credentials, code, expected ] = test;
+    const { credentials, code, expected } = test;
     let currentOptions = (credentials === 'Anauthorized') ?
       options : getOptionsWithAuthorization(credentials);
     const req = https.get(fullPath, currentOptions, res => {
@@ -78,7 +82,7 @@ const testWrongPath = () => {
   const wrongPath = 'gfdfsgdf/';
   const credentials = 'alegator:good_job';
   const currentOptions = getOptionsWithAuthorization(credentials);
-  const expected = '<h1>&#127819Page not found :(</h1>';
+  const expected = 'Page not found :(';
   https.get(url + wrongPath, currentOptions, res => {
     const { statusCode } = res;
     checkStatusCode(statusCode, 404, wrongPath, credentials);
