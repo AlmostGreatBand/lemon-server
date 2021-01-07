@@ -1,11 +1,9 @@
-'use strict';
-
 const fs = require('fs');
 const xmlJs = require('xml-js');
 const transactionsXML = fs.readFileSync('./xml_data/transactions.xml', 'utf-8');
 
 const fillTransactionsXml = dataForTransactions => {
-  const xmlObj = xmlJs.xml2js(transactionsXML, {compact: true});
+  const xmlObj = xmlJs.xml2js(transactionsXML, { compact: true });
 
   const xmlMerchant = xmlObj.request.merchant;
   xmlMerchant.id._text = dataForTransactions.merchantId;
@@ -22,8 +20,9 @@ const fillTransactionsXml = dataForTransactions => {
   xmlEndDate._attributes.value = dataForTransactions.endDate;
   xmlCardNumber._attributes.value = dataForTransactions.cardNumber;
 
-  const xmlWithData = xmlJs.js2xml(xmlObj, {spaces: 0, compact: true, fullTagEmptyElement: true});
+  const xmlWithData = xmlJs.js2xml(xmlObj,
+    { spaces: 0, compact: true, fullTagEmptyElement: true });
   return xmlWithData;
 };
 
-module.exports = {fillTransactionsXml};
+module.exports = { fillTransactionsXml };
