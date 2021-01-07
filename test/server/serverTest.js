@@ -8,44 +8,86 @@ const url = 'https://localhost:8000/';
 const options = {
   ca: [ fs.readFileSync('cert.pem') ],
 };
-const paths = [ 'profile/', 'cards/', 'transactions/', 'registration/', 'profile' ];
+const paths = [ 'profile/', 'cards/', 'transactions/', 'profile' ];
 const tests = [
-  ['alegator', 'good_job', ''],
-  ['', '', '<h1>&#127819Login and password should be specified</h1>'],
-  ['alegator', '', '<h1>&#127819Login and password should be specified</h1>'],
-  ['', 'good_job', '<h1>&#127819Login and password should be specified</h1>'],
-  ['saym', 'onloh', '<h1>&#127819Incorrect login entered :(</h1>'],
-  ['alegator', 'bad_job', '<h1>&#127819Incorrect password entered :(</h1>'],
+  ['alegator:good_job', 200, ''],
+  ['Anauthorized', 401, '<h1>&#127819You should authorize to access the site</h1>'],
+  [':', 401, '<h1>&#127819Login and password should be specified</h1>'],
+  ['alegator:', 401, '<h1>&#127819Login and password should be specified</h1>'],
+  [':good_job', 401, '<h1>&#127819Login and password should be specified</h1>'],
+  ['saym:onloh', 403, '<h1>&#127819Incorrect login entered :(</h1>'],
+  ['alegator:bad_job', 403, '<h1>&#127819Incorrect password entered :(</h1>'],
 ];
 
+const getOptionsWithAuthorization = credentials => {
+  const credentialsBase64 = Buffer.from(credentials).toString('base64');
+  let currentOptions = { 
+    ...options,
+      headers: { 
+        Authorization: `Basic ${ credentialsBase64 }` 
+      }
+  };
+  return currentOptions;
+};
+
+const checkStatusCode = (statusCode, expectedCode, path, credentials) => {
+  assert.strictEqual(
+    statusCode, expectedCode,
+    `Wrong status code, expected ${expectedCode}, got ${statusCode}
+    Path: ${path}
+    Credentials: ${credentials}`
+  );
+};
+
+const checkMsg = (msg, expected, path, credentials) => {
+  assert.strictEqual(
+    msg.toString(), expected, 
+    `Wrong error msg, expected ${expected}, got ${msg}
+    Path: ${path}
+    Credentials: ${credentials}`
+  );
+};
+
+const logSuccess = (path, credentials, statusCode, msg) => {
+  console.log(
+    `Test successful: ${path} ${credentials}, code: ${statusCode},
+    got msg: ${msg.toString()}\n`
+  );
+};
+
 const testPath = path => {
+  const fullPath = url + path;
   for (const test of tests) {
-    const [ login, passwd, expected ] = test;
-    const params = `?login=${login}&password=${passwd}`;
-    const fullPath = url + path + params;
-    const req = https.get(fullPath, options, res => {
+    const [ credentials, code, expected ] = test;
+    let currentOptions = (credentials === 'Anauthorized') ?
+      options : getOptionsWithAuthorization(credentials);
+    const req = https.get(fullPath, currentOptions, res => {
       const { statusCode } = res;
+      checkStatusCode(statusCode, code, path, credentials);
       if (statusCode === 200) return;
-      if (statusCode !== 403) assert.fail(`Request Failed.\nStatus Code: ${statusCode}`);
       res.on('data', msg => {
-        assert.strictEqual(
-          msg.toString(), expected, `Wrong error msg, expected ${expected}, got ${msg}`
-        );
-        console.log(`Test successful: ${fullPath}`);
-        console.log(msg.toString() + '\n');
+        checkMsg(msg, expected, path, credentials);
+        logSuccess(path, credentials, statusCode, msg);
       });
     });
     req.setTimeout(3000, () => assert.fail('Request timed out'));
   }
 };
 
-paths.forEach(testPath);
+const testWrongPath = () => {
+  const wrongPath = 'gfdfsgdf/';
+  const credentials = 'alegator:good_job';
+  const currentOptions = getOptionsWithAuthorization(credentials);
+  const expected = '<h1>&#127819Page not found :(</h1>';
+  https.get(url + wrongPath, currentOptions, res => {
+    const { statusCode } = res;
+    checkStatusCode(statusCode, 404, wrongPath, credentials);
+    res.on('data', msg => {
+      checkMsg(msg, expected, wrongPath, credentials);
+      logSuccess('wrong path', credentials, statusCode, msg);
+    });
+  }).setTimeout(3000, () => assert.fail('Request timed out'));
+};
 
-const wrongPath = 'gfdfsgdf/';
-https.get(url + wrongPath, options, res => {
-  const { statusCode } = res;
-  assert.strictEqual(
-    statusCode, 404, `Wrong status code, expected 404, got ${statusCode}`
-  );
-  console.log('Test successful: wrong path');
-}).setTimeout(3000, () => assert.fail('Request timed out'));
+paths.forEach(testPath);
+testWrongPath();
