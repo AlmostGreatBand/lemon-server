@@ -1,5 +1,3 @@
-'use strict';
-
 /** @class User
  *
  * @property {string} name - User's name

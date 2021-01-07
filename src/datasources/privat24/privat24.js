@@ -154,7 +154,6 @@ const getTransactionsData = async dataForTransactions => {
 const getBalanceData = async dataForBalance => {
   const result = [];
   for (const data of dataForBalance) {
-    console.log(11);
     result.push(getData(data, handleBalanceData));
   }
   return Promise.allSettled(Object.values(result));
