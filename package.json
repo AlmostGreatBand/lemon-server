@@ -1,12 +1,13 @@
 {
   "name": "lemon-server",
-  "version": "0.0.1",
+  "version": "0.0.3",
   "description": "Back-end for Lemon🍋",
   "main": "src/main.js",
   "scripts": {
     "test": "node test/server/serverTest.js",
     "start": "node src/main.js",
-    "testServer": "node src/testServer.js"
+    "testServer": "node src/testServer/testServer.js",
+    "preinstall": "./set-up.sh"
   },
   "repository": {
     "type": "git",
@@ -15,5 +16,8 @@
   "keywords": [
     "lemon"
   ],
-  "author": "AlmostGreatBand"
+  "author": "AlmostGreatBand",
+  "devDependencies": {
+    "eslint": "^7.17.0"
+  }
 }
