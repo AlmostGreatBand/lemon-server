@@ -8,6 +8,7 @@ const {
   dateToString,
   divideIntoPeriods
 } = require('./utils/dates');
+const { BankDataSource } = require('../BankDataSource');
 
 const createSignature = (xml, password) => {
   const regexp = /(?<=<data>).*(?=<\/data)/;
@@ -147,12 +148,13 @@ const getTransactionsData = async dataForTransactions => {
   let result = [];
   for (const array of transactions) result = [...result, ...array.reverse()];
 
-  return { transactions: result };
+  return result;
 };
 
 const getBalanceData = async dataForBalance => {
   const result = [];
   for (const data of dataForBalance) {
+    console.log(11);
     result.push(getData(data, handleBalanceData));
   }
   return Promise.allSettled(Object.values(result));
@@ -179,10 +181,30 @@ const dataForBalanceRequest = { // sample data for balance request
   country: 'UA'
 };
 
+// example of using
 (async () => {
   const tranData = await getTransactionsData(dataForTransactionsRequest);
-  const balanceData = await getBalanceData(dataForBalanceRequest);
-  // dataForBalanceRequest can be array of data objects
+  const balanceData = await getBalanceData([dataForBalanceRequest]);
+  // dataForBalanceRequest is array of data objects
   console.log(tranData);
   console.log(balanceData);
 })();
+
+// just to implement the interface
+class PrivatDataSource extends BankDataSource {
+  constructor() {
+    super();
+  }
+  // conf is similar to dataForTransactionsRequest
+  async getTransactions(card, conf) {
+    conf.cardNumber = card.cardNum + '';
+    return await getTransactionsData(conf);
+  }
+  // additional method for getting balances of cards array
+  // conf is array of objects similar to dataForBalanceRequest
+  async getBalance(conf) {
+    return await getBalanceData(conf);
+  }
+}
+
+module.exports = PrivatDataSource;

@@ -1,5 +1,3 @@
-'use strict';
-
 /** Makes transactions to bank API */
 class BankDataSource {
   /** Obtains transactions from card
@@ -10,3 +8,5 @@ class BankDataSource {
     throw new Error('Not implemented');
   }
 }
+
+module.exports = { BankDataSource };
