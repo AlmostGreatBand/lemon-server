@@ -1,31 +1,28 @@
 'use strict';
 
-const { URL } = require('url');
 const databaseInterface = require('./dbInterface.js');
 
 const authentificate = (login, password) => {
   if (!login || !password) return {
     err: '<h1>&#127819Login and password should be specified</h1>',
+    code: 401,
     account: null
   };
   const account = databaseInterface.getAccount(login);
-  if (!account) return {
-    err: '<h1>&#127819Incorrect login entered :(</h1>',
+  if (!account || password !== account.password) return {
+    err: '<h1>&#127819Incorrect login or password :(</h1>',
+    code: 403,
     account: null
   };
-  if (password !== account.password) return {
-    err: '<h1>&#127819Incorrect password entered :(</h1>',
-    account: null
-  };
-  return { err: null, account };
+  return { err: null, code: 200, account };
 };
 
 const profileHandler = (credentials, res) => {
   const login = credentials[0];
   const password = credentials[1];
-  const { err, account } = authentificate(login, password);
+  const { err, code, account } = authentificate(login, password);
   if (err) {
-    res.writeHead(403);
+    res.writeHead(code);
     res.end(err);
     return null;
   }
