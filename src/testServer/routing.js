@@ -25,26 +25,24 @@ const profileHandler = credentials => {
   const login = credentials[0];
   const password = credentials[1];
   const { err, code, account } = authentificate(login, password);
-  const responseData = err ? err : account;
+  const responseData = err ? { error: err } : account;
   return makeResponse(code, responseData);
 };
 
 const cardsHandler = credentials => {
   const result = profileHandler(credentials);
-  const { code } = result;
-  if (code !== 200) return result;
   const account = result.data;
+  if (account.error) return result;
   const cards = databaseInterface.getCards(account.id);
-  return makeResponse(code, cards);
+  return makeResponse(result.code, cards);
 };
 
 const transactionsHandler = credentials => {
   const result = cardsHandler(credentials);
-  const { code } = result;
-  if (code !== 200) return result;
   const cards = result.data;
+  if (cards.error) return result;
   const transactions = databaseInterface.getTransactions(cards);
-  return makeResponse(code, transactions);
+  return makeResponse(result.code, transactions);
 };
 
 const routing = {

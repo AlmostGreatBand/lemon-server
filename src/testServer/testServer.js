@@ -7,7 +7,7 @@ const normalizePath = pathname => (
 );
 
 const makeData = string => (
-  JSON.stringify(`&#127819${string}`)
+  JSON.stringify({ error: `&#127819${string}` })
 );
 
 const authorizeUser = (req, res) => {

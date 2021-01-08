@@ -42,7 +42,7 @@ const checkStatusCode = (statusCode, expectedCode, path, credentials) => {
 
 const checkMsg = (msg, expected, path, credentials) => {
   assert.strictEqual(
-    JSON.parse(msg), `&#127819${expected}`, 
+    JSON.parse(msg).error.toString(), `&#127819${expected}`, 
     `Wrong error msg, expected &#127819${expected}, got ${msg}
     Path: ${path}
     Credentials: ${credentials}`
