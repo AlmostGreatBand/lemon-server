@@ -6,6 +6,10 @@ const normalizePath = pathname => (
   pathname.endsWith('/') ? pathname : pathname + '/'
 );
 
+const makeData = string => (
+  JSON.stringify(`&#127819${string}`)
+);
+
 const authorizeUser = (req, res) => {
   const { authorization } = req.headers;
   if (!authorization) {
@@ -14,7 +18,7 @@ const authorizeUser = (req, res) => {
       [ 'Basic', 'realm="Lemon"', 'charset="UTF-8"' ]
     );
     res.writeHead(401);
-    res.end('<h1>&#127819You should authorize to access the site</h1>');
+    res.end(makeData('You should authorize to access the site'));
     return null;
   }
   const credentialsBase64 = authorization.split(' ')[1];
@@ -30,12 +34,11 @@ const createServer = (protocol, options) => (
     const handler = routing[normalizePath(req.url)];
     if (!handler) {
       res.writeHead(404);
-      return res.end('<h1>&#127819Page not found :(</h1>');
+      return res.end(makeData('Page not found :('));
     }
-    const data = handler(credentials, res);
-    if (!data) return;
-    res.writeHead(200);
-    res.end((typeof data === 'string') ? data : JSON.stringify(data));
+    const { code, data } = handler(credentials);
+    res.writeHead(code);
+    res.end(JSON.stringify(data));
   })
 );
 

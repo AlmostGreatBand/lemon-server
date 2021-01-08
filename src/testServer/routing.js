@@ -2,54 +2,59 @@
 
 const databaseInterface = require('./dbInterface.js');
 
+const makeResponse = (code, data) => (
+  { code, data }
+);
+
 const authentificate = (login, password) => {
   if (!login || !password) return {
-    err: '<h1>&#127819Login and password should be specified</h1>',
+    err: '&#127819Login and password should be specified',
     code: 401,
     account: null
   };
   const account = databaseInterface.getAccount(login);
   if (!account || password !== account.password) return {
-    err: '<h1>&#127819Incorrect login or password :(</h1>',
+    err: '&#127819Incorrect login or password :(',
     code: 403,
     account: null
   };
   return { err: null, code: 200, account };
 };
 
-const profileHandler = (credentials, res) => {
+const profileHandler = credentials => {
   const login = credentials[0];
   const password = credentials[1];
   const { err, code, account } = authentificate(login, password);
-  if (err) {
-    res.writeHead(code);
-    res.end(err);
-    return null;
-  }
-  return account;
+  if (err) return { code, data: err };
+  return makeResponse(code, account);
 };
 
-const cardsHandler = (credentials, res) => {
-  const account = profileHandler(credentials, res);
-  if (!account) return null;
+const cardsHandler = credentials => {
+  const result = profileHandler(credentials);
+  const { code } = result;
+  if (code !== 200) return result;
+  const account = result.data;
   const cards = databaseInterface.getCards(account.id);
-  return cards;
+  return makeResponse(code, cards);
 };
 
-const transactionsHandler = (credentials, res) => {
-  const cards = cardsHandler(credentials, res);
-  if (!cards) return null;
+const transactionsHandler = credentials => {
+  const result = cardsHandler(credentials);
+  const { code } = result;
+  if (code !== 200) return result;
+  const cards = result.data;
   const transactions = databaseInterface.getTransactions(cards);
-  return transactions;
+  return makeResponse(code, transactions);
 };
 
 const routing = {
-  '/': () => '<h1>Welcome to Lemon&#127819 Server!</h1>',
-  '/favicon.ico/': () => {}, //Debug, never mind
-  '/profile/': (credentials, res) => profileHandler(credentials, res),
-  '/cards/': (credentials, res) => cardsHandler(credentials, res),
-  '/transactions/': (credentials, res) => transactionsHandler(credentials, res),
-  '/registration/': () => '<h1>&#127819Registration process will be here</h1>',
+  '/': () => makeResponse(200, 'Welcome to Lemon&#127819 Server!'),
+  '/profile/': credentials => profileHandler(credentials),
+  '/cards/': credentials => cardsHandler(credentials),
+  '/transactions/': credentials => transactionsHandler(credentials),
+  '/registration/': () => (
+    makeResponse(200, '&#127819Registration process will be here')
+  ),
 };
 
 module.exports = routing;
