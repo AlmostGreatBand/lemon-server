@@ -25,8 +25,8 @@ const profileHandler = credentials => {
   const login = credentials[0];
   const password = credentials[1];
   const { err, code, account } = authentificate(login, password);
-  if (err) return { code, data: err };
-  return makeResponse(code, account);
+  const responseData = err ? err : account;
+  return makeResponse(code, responseData);
 };
 
 const cardsHandler = credentials => {
