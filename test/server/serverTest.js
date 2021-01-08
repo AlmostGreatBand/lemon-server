@@ -21,6 +21,9 @@ const tests = [
   testCase('alegator:bad_job', 403, 'Incorrect login or password :('),
 ];
 
+const buffer = new SharedArrayBuffer(4);
+const counter = new Int32Array(buffer, 0, 1);
+
 const getOptionsWithAuthorization = credentials => {
   const credentialsBase64 = Buffer.from(credentials).toString('base64');
   let options = { 
@@ -59,16 +62,19 @@ const logSuccess = (path, credentials, statusCode, msg) => {
 const testPath = path => {
   const fullPath = url + path;
   for (const test of tests) {
+    Atomics.add(counter, 0, 1);
     const { credentials, code, expected } = test;
     let options = (credentials === 'Anauthorized') ?
       {} : getOptionsWithAuthorization(credentials);
     const req = http.get(fullPath, options, res => {
       const { statusCode } = res;
       checkStatusCode(statusCode, code, path, credentials);
-      if (statusCode === 200) return;
+      if (statusCode === 200) return Atomics.sub(counter, 0, 1);
       res.on('data', msg => {
         checkMsg(msg, expected, path, credentials);
         logSuccess(path, credentials, statusCode, msg);
+        const count = Atomics.sub(counter, 0, 1);
+        if (count <= 1) server.close(() => console.log('Tests finished'));
       });
     });
     req.setTimeout(3000, () => assert.fail('Request timed out'));
@@ -80,12 +86,15 @@ const testWrongPath = () => {
   const credentials = 'alegator:good_job';
   const options = getOptionsWithAuthorization(credentials);
   const expected = 'Page not found :(';
+  Atomics.add(counter, 0, 1);
   http.get(url + wrongPath, options, res => {
     const { statusCode } = res;
     checkStatusCode(statusCode, 404, wrongPath, credentials);
     res.on('data', msg => {
       checkMsg(msg, expected, wrongPath, credentials);
       logSuccess('wrong path', credentials, statusCode, msg);
+      const count = Atomics.sub(counter, 0, 1);
+      if (count <= 1) server.close(() => console.log('Tests finished'));
     });
   }).setTimeout(3000, () => assert.fail('Request timed out'));
 };
@@ -94,4 +103,3 @@ const server = createServer(http, {});
 server.listen(8000);
 paths.forEach(testPath);
 testWrongPath();
-setTimeout(() => server.close(() => console.log('Tests finished')), 3000);
