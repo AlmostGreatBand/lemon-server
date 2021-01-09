@@ -13,7 +13,7 @@ const testCase = (credentials, code, expected) => (
 );
 const tests = [
   testCase('alegator:good_job', 200, ''),
-  testCase('Anauthorized', 401, 'You should authorize to access the site'),
+  testCase('Unauthorized', 401, 'You should authorize to access the site'),
   testCase(':', 401, 'Login and password should be specified'),
   testCase('alegator:', 401, 'Login and password should be specified'),
   testCase(':good_job', 401, 'Login and password should be specified'),
@@ -58,44 +58,37 @@ const logSuccess = (path, credentials, statusCode, msg) => {
   );
 };
 
-const testPath = path => {
-  const fullPath = url + path;
-  for (const test of tests) {
-    counter++;
-    const { credentials, code, expected } = test;
-    let options = (credentials === 'Anauthorized') ?
-      {} : getOptionsWithAuthorization(credentials);
-    const req = http.get(fullPath, options, res => {
-      const { statusCode } = res;
-      checkStatusCode(statusCode, code, path, credentials);
-      if (statusCode === 200) return counter--;
-      res.on('data', msg => {
-        checkMsg(msg, expected, path, credentials);
-        logSuccess(path, credentials, statusCode, msg);
-        counter--;
-        if (counter <= 0) server.close(() => console.log('Tests finished'));
-      });
+const testRequest = (path, test) => {
+  counter++;
+  const { credentials, code, expected } = test;
+  let options = (credentials === 'Unauthorized') ?
+    {} : getOptionsWithAuthorization(credentials);
+  const req = http.get(url + path, options, res => {
+    const { statusCode } = res;
+    checkStatusCode(statusCode, code, path, credentials);
+    if (statusCode === 200) return counter--;
+    res.on('data', msg => {
+      checkMsg(msg, expected, path, credentials);
+      logSuccess(path, credentials, statusCode, msg);
+      counter--;
+      if (counter <= 0) server.close(() => console.log('Tests finished'));
     });
-    req.setTimeout(3000, () => assert.fail('Request timed out'));
+  });
+  req.setTimeout(3000, () => assert.fail('Request timed out'));
+};
+
+const testPath = path => {
+  for (const test of tests) {
+    testRequest(path, test);
   }
 };
 
 const testWrongPath = () => {
   const wrongPath = 'gfdfsgdf/';
-  const credentials = 'alegator:good_job';
-  const options = getOptionsWithAuthorization(credentials);
-  const expected = 'Page not found :(';
-  counter++;
-  http.get(url + wrongPath, options, res => {
-    const { statusCode } = res;
-    checkStatusCode(statusCode, 404, wrongPath, credentials);
-    res.on('data', msg => {
-      checkMsg(msg, expected, wrongPath, credentials);
-      logSuccess('wrong path', credentials, statusCode, msg);
-      counter--;
-      if (counter <= 0) server.close(() => console.log('Tests finished'));
-    });
-  }).setTimeout(3000, () => assert.fail('Request timed out'));
+  const wrongPathTest = testCase(
+    'alegator:good_job', 404, 'Page not found :('
+  );
+  testRequest(wrongPath, wrongPathTest);
 };
 
 const server = createServer(http, {});
