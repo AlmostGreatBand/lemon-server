@@ -23,7 +23,8 @@ const tests = [
 
 let counter = 0;
 
-const getOptionsWithAuthorization = credentials => {
+const getOptions = credentials => {
+  if (credentials === 'Unauthorized') return {};
   const credentialsBase64 = Buffer.from(credentials).toString('base64');
   let options = { 
       headers: { 
@@ -61,8 +62,7 @@ const logSuccess = (path, credentials, statusCode, msg) => {
 const testRequest = (path, test) => {
   counter++;
   const { credentials, code, expected } = test;
-  let options = (credentials === 'Unauthorized') ?
-    {} : getOptionsWithAuthorization(credentials);
+  let options = getOptions(credentials);
   const req = http.get(url + path, options, res => {
     const { statusCode } = res;
     checkStatusCode(statusCode, code, path, credentials);
