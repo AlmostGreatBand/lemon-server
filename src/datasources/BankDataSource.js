@@ -10,3 +10,5 @@ class BankDataSource {
     throw new Error('Not implemented');
   }
 }
+
+module.exports = BankDataSource
