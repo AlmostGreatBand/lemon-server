@@ -10,44 +10,46 @@ class MonoDataSource extends BankDataSource {
         personalInfo: '/personal/client-info',
     }
 
-    constructor(token) {
-        super();
-        this.token = token;
+    getTransactions(token, accounts) {
+        const result = {};
+
+        accounts.forEach(option => {
+            const { account, from, to } = option;
+
+            let queryString = `${MonoDataSource.#ROUTES.transactions}/${account}/${from.getTime()}`;
+            if (to) queryString += `/${to.getTime()}`;
+
+            if (account !== undefined && from !== undefined) {
+                result[account] = this.#getData(token, queryString);
+            } else {
+                const errMessage = 'Error: account or from-date is not specified';
+                console.error(errMessage);
+                throw new Error(errMessage);
+            }
+        });
+        return result;
     }
 
-    async getTransactions(account, from, to) {
-        let queryString = `${MonoDataSource.#ROUTES.transactions}/${account}/${from.getTime()}`;
-        if (to) queryString += `/${to.getTime()}`;
-
-        if (account !== undefined && from !== undefined) {
-            return this.#getData(queryString);
-        } else {
-            const errMessage = 'Error: account or from-date is not specified';
-            console.error(errMessage);
-            throw new Error(errMessage);
-        }
-    }
-
-    async getAccounts() {
+    getAccounts(token) {
         const queryString = MonoDataSource.#ROUTES.personalInfo;
-        return this.#getData(queryString);
+        return this.#getData(token, queryString);
     }
 
-    #makeRequest = (path) => {
+    #makeRequest = (token, path) => {
         const options = {
             hostname: MonoDataSource.#ROUTES.baseUrl,
             path: path,
             method: 'GET',
             headers: {
-                'X-Token': this.token,
+                'X-Token': token,
                 'Content-Type': 'application/json; charset=UTF-8',
             }
         };
         return http.request(options);
     }
 
-    #getData = async (path) => new Promise((resolve, reject) => {
-        const req = this.#makeRequest(path);
+    #getData = (token, path) => new Promise((resolve, reject) => {
+        const req = this.#makeRequest(token, path);
         req.on('response', res => {
             if (res.statusCode !== 200) {
                 const errMessage = `Error: code ${res.statusCode} message: ${res.statusMessage}`;
