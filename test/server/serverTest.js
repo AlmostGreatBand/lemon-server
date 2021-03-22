@@ -139,7 +139,7 @@ const testWrongPath = async () => {
   await testRequest(wrongPath, wrongPathTest);
 };
 
-const server = createServer(http, {});
+const server = createServer(http);
 server.listen(8000);
 
 (async () => {
