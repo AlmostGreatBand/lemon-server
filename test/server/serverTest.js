@@ -7,6 +7,36 @@ const createServer = require('../../src/testServer/testServer.js');
 
 const url = 'http://localhost:8000/';
 const paths = [ 'profile/', 'cards/', 'transactions/', 'profile' ];
+const expectedResults = {
+  'profile/': {
+    id: 1,
+    name: 'Oleh',
+    login: 'alegator',
+    password: 'good_job'
+  },
+  'cards/': [{
+    id: 321,
+    bank: 353,
+    num: 1234,
+    type: 'black',
+    balance: 3333,
+    currency: 'UAH',
+    token: '65yjy45fdh'
+  }],
+  'transactions/': [{
+    id: 1,
+    card: 321,
+    amount: -1500,
+    type: 'Cafe',
+    date: '2020-10-12T10:25:19.833Z'
+  }],
+  'profile': {
+    id: 1,
+    name: 'Oleh',
+    login: 'alegator',
+    password: 'good_job'
+  },
+};
 
 const testCase = (credentials, code, expected) => (
   { credentials, code, expected }
@@ -52,21 +82,39 @@ const checkMsg = (msg, expected, path, credentials) => {
   );
 };
 
-const logSuccess = (path, credentials, statusCode, msg) => {
+const checkResponseData = (data, path) => {
+  const expected = JSON.stringify(expectedResults[path]);
+  assert.strictEqual(data, expected, `Wrong response data, expected: 
+    ${expected}, 
+    got: 
+    ${data}
+    Path: ${path}`);
+};
+
+const logSuccess = (path, credentials, statusCode, responseData) => {
   console.log(
     `Test successful: ${path} ${credentials}, code: ${statusCode},
-    got msg: ${msg.toString()}\n`
+    got response: ${responseData.toString()}\n`
   );
 };
 
-const testRequest = (path, test) => {
+const testRequest = async (path, test) => {
   counter++;
   const { credentials, code, expected } = test;
   let options = getOptions(credentials);
-  const req = http.get(url + path, options, res => {
+  const req = http.get(url + path, options, async res => {
     const { statusCode } = res;
     checkStatusCode(statusCode, code, path, credentials);
-    if (statusCode === 200) return counter--;
+    if (statusCode === 200) {
+      const buffers = [];
+      for await (const chunk of res) buffers.push(chunk);
+      const data = Buffer.concat(buffers).toString();
+      checkResponseData(data, path);
+      logSuccess(path, credentials, statusCode, data);
+      counter--;
+      if (counter <= 0) server.close(() => console.log('Tests finished'));
+      return;
+    };
     res.on('data', msg => {
       checkMsg(msg, expected, path, credentials);
       logSuccess(path, credentials, statusCode, msg);
@@ -77,21 +125,28 @@ const testRequest = (path, test) => {
   req.setTimeout(3000, () => assert.fail('Request timed out'));
 };
 
-const testPath = path => {
+const testPath = async path => {
   for (const test of tests) {
-    testRequest(path, test);
+    await testRequest(path, test);
   }
 };
 
-const testWrongPath = () => {
+const testWrongPath = async () => {
   const wrongPath = 'gfdfsgdf/';
   const wrongPathTest = testCase(
     'alegator:good_job', 404, 'Page not found :('
   );
-  testRequest(wrongPath, wrongPathTest);
+  await testRequest(wrongPath, wrongPathTest);
 };
 
 const server = createServer(http, {});
 server.listen(8000);
-paths.forEach(testPath);
-testWrongPath();
+
+(async () => {
+  try {
+    await paths.forEach(testPath);
+    await testWrongPath();
+  } catch(err) {
+    console.error(err);
+  }
+})();
