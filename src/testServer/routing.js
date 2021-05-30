@@ -36,14 +36,14 @@ const cardsHandler = (credentials, res) => {
   const account = profileHandler(credentials, res);
   if (!account) return null;
   const cards = databaseInterface.getCards(account.id);
-  return cards;
+  return { "cards": cards };
 };
 
 const transactionsHandler = (credentials, res) => {
-  const cards = cardsHandler(credentials, res);
+  const cards = cardsHandler(credentials, res).cards;
   if (!cards) return null;
   const transactions = databaseInterface.getTransactions(cards);
-  return transactions;
+  return { "transactions": transactions };
 };
 
 const routing = {
