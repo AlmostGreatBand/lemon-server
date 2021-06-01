@@ -11,13 +11,13 @@ const getBanks = accId => (
 );
 
 const getCards = accId => {
-  const bankIds = getBanks(accId).map(bank => bank.id);
-  return db.cards.filter(card => bankIds.includes(card.bank));
+  const bankIds = getBanks(accId).map(bank => bank.bank_id);
+  return db.cards.filter(card => bankIds.includes(card.bank_id));
 };
 
 const getTransactions = cards => {
-  const cardIds = cards.map(card => card.id);
-  return db.transactions.filter(trans => cardIds.includes(trans.card));
+  const cardIds = cards.map(card => card.card_id);
+  return db.transactions.filter(trans => cardIds.includes(trans.card_id));
 };
 
 module.exports = { getAccount, getCards, getTransactions };

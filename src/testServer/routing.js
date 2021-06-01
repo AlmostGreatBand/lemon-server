@@ -35,7 +35,7 @@ const profileHandler = (credentials, res) => {
 const cardsHandler = (credentials, res) => {
   const account = profileHandler(credentials, res);
   if (!account) return null;
-  const cards = databaseInterface.getCards(account.id);
+  const cards = databaseInterface.getCards(account.account_id);
   return { "cards": cards };
 };
 
