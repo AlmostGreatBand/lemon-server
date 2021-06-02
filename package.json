@@ -6,7 +6,7 @@
   "scripts": {
     "test": "node test/server/serverTest.js",
     "start": "node src/main.js",
-    "testServer": "node src/testServer/testServer.js",
+    "testServer": "node src/testServer/main.js",
     "preinstall": "./set-up.sh"
   },
   "repository": {
