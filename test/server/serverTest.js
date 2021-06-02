@@ -9,29 +9,34 @@ const url = 'http://localhost:8000/';
 const paths = [ 'profile/', 'cards/', 'transactions/', 'profile' ];
 const expectedResults = {
   'profile/': {
-    id: 1,
+    account_id: 1,
     name: 'Oleh',
     login: 'alegator',
     password: 'good_job'
   },
-  'cards/': [{
-    id: 321,
-    bank: 353,
-    num: 1234,
-    type: 'black',
-    balance: 3333,
-    currency: 'UAH',
-    token: '65yjy45fdh'
-  }],
-  'transactions/': [{
-    id: 1,
-    card: 321,
-    amount: -1500,
-    type: 'Cafe',
-    date: '2020-10-12T10:25:19.833Z'
-  }],
+  'cards/': {
+    cards: [{
+      card_id: 321,
+      bank_id: 353,
+      bank: 'Mono',
+      card_num: 1234,
+      type: 'black',
+      balance: 3333,
+      currency: 'UAH',
+      token: '65yjy45fdh'
+    }]
+  },
+  'transactions/': {
+    transactions: [{
+      transaction_id: 1,
+      card_id: 321,
+      amount: -1500,
+      type: 'Cafe',
+      date: '2020-10-12T10:25:19.833Z'
+    }]
+  },
   'profile': {
-    id: 1,
+    account_id: 1,
     name: 'Oleh',
     login: 'alegator',
     password: 'good_job'
@@ -106,19 +111,19 @@ const testRequest = async (path, test) => {
     const { statusCode } = res;
     checkStatusCode(statusCode, code, path, credentials);
     if (statusCode === 200) {
+      counter--;
       const buffers = [];
       for await (const chunk of res) buffers.push(chunk);
       const data = Buffer.concat(buffers).toString();
       checkResponseData(data, path);
       logSuccess(path, credentials, statusCode, data);
-      counter--;
       if (counter <= 0) server.close(() => console.log('Tests finished'));
       return;
     };
     res.on('data', msg => {
+      counter--;
       checkMsg(msg, expected, path, credentials);
       logSuccess(path, credentials, statusCode, msg);
-      counter--;
       if (counter <= 0) server.close(() => console.log('Tests finished'));
     });
   });
