@@ -34,7 +34,7 @@ const cardsHandler = credentials => {
   const account = result.data;
   if (account.error) return result;
   const cards = databaseInterface.getCards(account.account_id);
-  return makeResponse(result.code, { "cards": cards });
+  return makeResponse(result.code, { cards });
 };
 
 const transactionsHandler = credentials => {
@@ -42,7 +42,7 @@ const transactionsHandler = credentials => {
   const { cards, error } = result.data;
   if (error) return result;
   const transactions = databaseInterface.getTransactions(cards);
-  return makeResponse(result.code, { "transactions": transactions });
+  return makeResponse(result.code, { transactions });
 };
 
 const routing = {

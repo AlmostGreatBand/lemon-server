@@ -1,48 +1,158 @@
 'use strict';
+const dbInterface = require('../testServer/dbInterface'); // temp db
+const MonoDataSource = require('./mono/mono');
+const { lastMonth } = require('./utils');
 
 /** Unites local and remote datasources */
 class LemonRepository {
-  constructor(user) {
-    this.user = user;
+  constructor() {
+    this.db = dbInterface;
+    this.monoDS = new MonoDataSource();
   }
 
-  /** @return User */
-  getUserInfo() {
-    //TODO: not yet implemented
+  /** @return User, error */
+  getUserInfo(user) {
+    const profile = this.db.getAccount(user.login);
+    if (!profile) {
+      return { profile: null, error: new Error('Account Not Found') };
+    }
+    return { profile, error: null };
   }
 
-  /** @return User */
+  /** @return boolean, error */
   changeUserInfo(user) {
-    //TODO: not yet implemented
+    const profile = this.db.getAccount(user.login);
+    if (!profile) {
+      return { ok: false, error: new Error('Account Not Found') };
+    }
+
+    const result = this.db.updateAccount(user);
+
+    return { ok: result, error: null };
   }
 
-  /** @return Array<Card> */
-  getCards() {
-    //TODO: not yet implemented
+  /** @return boolean, error */
+  setUser(user) {
+    const profile = this.db.getAccount(user.login);
+    if (profile) {
+      return {
+        ok: false,
+        error: new Error(`Account with login ${profile.login} already exists`)
+      };
+    }
+    const ok = this.db.setAccount();
+    return { ok, error: null };
   }
 
-  /** @return Card */
-  setCard(card) {
-    //TODO: not yet implemented
+  setBank(user, bank) {
+    const profile = this.db.getAccount(user.login);
+    if (!profile) {
+      return { ok: false, error: new Error('Account Not Found') };
+    }
+
+    const ok = this.db.setBank(profile.account_id, bank);
+    return { ok, error: null };
   }
 
-  /** @return boolean */
+  /** @return Array<Card>, error */
+  getCards(user) {
+    const profile = this.db.getAccount(user.login);
+    if (!profile) {
+      return { cards: null, error: new Error('Account Not Found') };
+    }
+
+    return { cards: this.db.getCards(profile.account_id), error: null };
+  }
+
+  /** @return boolean, error */
+  async setCard(user) {
+    try {
+      const profile = this.db.getAccount(user.login);
+      if (!profile.token) {
+        return { ok: false, error: new Error('Account Not Found') };
+      }
+      const bank = dbInterface.getMonobank(profile);
+      if (!bank) {
+        return { ok: false, error: new Error('No monobank cards present') };
+      }
+      const monoCards = await this.monoDS.getAccounts(bank.token);
+      const monoAccounts = monoCards.accounts;
+      const ok = this.db.setMonoCards(monoAccounts, profile);
+      return { ok, error: null };
+    } catch (error) {
+      return { ok: false, error };
+    }
+  }
+
+  /** @return boolean, error */
   deleteCard(card) {
-    //TODO: not yet implemented
+    const exists = this.db.checkCard(card.card_id);
+    if (!exists) {
+      return { ok: false, error: new Error('Card Not Found') };
+    }
+    const ok = this.db.deleteCard(card.card_id);
+    return { ok, error: null };
   }
 
-  /** @return Array<Transaction> */
-  getTransactions(card) {
-    //TODO: not yet implemented
+  /** @return Array<Transaction>, error */
+  async getTransactions(user) {
+    try {
+      const profile = this.db.getAccount(user.login);
+      if (!profile.token) {
+        return { transactions: null, error: new Error('Account Has No Token') };
+      }
+      const bank = this.db.getMonobank(profile);
+      const cards = this.db.getCards(profile.account_id);
+      const accounts = this._formMonoTrRequest(cards);
+      const monoTransactions = this
+        .monoDS
+        .getTransactions(bank.token, accounts);
+      const transactions = this.db.getTransactions(cards);
+      // TODO: move to mono datasource
+      const newTransactions = [];
+      for (const [acc, trs] of Object.entries(monoTransactions)) {
+        const newTrs = await trs;
+        newTrs.forEach(tr => tr.bankCardId = acc);
+        newTransactions.push(...newTrs);
+      }
+      this.db.setMonoTransactions(newTransactions);
+      return {
+        transactions: transactions.concat(newTransactions),
+        error: null
+      };
+    } catch (error) {
+      return { transactions: null, error };
+    }
+  }
+
+  _formMonoTrRequest(cards) {
+    const accounts = [];
+    cards.forEach(card => {
+      const trs = this.db.getLastTransaction(card);
+      if (!trs || new Date(trs.date) < lastMonth()) {
+        accounts.push({
+          account: card.id,
+          from: lastMonth(),
+        });
+      } else {
+        accounts.push({
+          account: card.id,
+          from: trs.date,
+        });
+      }
+    });
+    return accounts;
   }
 
   /** @return Transaction */
-  setTransaction(transaction) {
+  setTransaction(transaction) { // eslint-disable-line
     //TODO: not yet implemented
   }
 
   /** @return boolean */
-  deleteTransaction(transaction) {
+  deleteTransaction(transaction) { // eslint-disable-line
     //TODO: not yet implemented
   }
 }
+
+module.exports = new LemonRepository();
