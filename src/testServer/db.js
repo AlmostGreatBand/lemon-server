@@ -1,5 +1,5 @@
 'use strict';
-
+/* eslint-disable camelcase */
 const supportedBanks = {
   MONO: 'Mono',
   PRIVAT: 'Privat',
