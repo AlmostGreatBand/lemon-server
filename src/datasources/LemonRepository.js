@@ -1,11 +1,7 @@
 'use strict';
 const dbInterface = require('../testServer/dbInterface'); // temp db
 const MonoDataSource = require('./mono/mono');
-
-const lastMonth = () => {
-  const date = new Date();
-  return date.setMonth(date.getMonth() - 1);
-};
+const { lastMonth } = require('./utils');
 
 /** Unites local and remote datasources */
 class LemonRepository {
@@ -121,7 +117,7 @@ class LemonRepository {
         throw new Error('Account Not Found');
       }
       if (!profile.token) {
-        throw new Error('Account Has No Token');
+        return { transactions: null, error: new Error('Account Has No Token') };
       }
       if (user.password !== profile.password) {
         throw new Error('Wrong password');
@@ -131,30 +127,21 @@ class LemonRepository {
         throw new Error('No cards present');
       }
       const cards = this.db.getCards(profile.account_id);
-      const accounts = [];
-      cards.forEach(card => {
-        const trs = this.db.getLastTransaction(card);
-        if (!trs || new Date(trs.date) < lastMonth()) {
-          accounts.push({
-            account: card.id,
-            from: lastMonth(),
-          });
-        } else {
-          accounts.push({
-            account: card.id,
-            from: trs.date,
-          });
-        }
-      });
-      const monoTransactions = accounts ?
-        this.monoDS.getTransactions(bank.token, [ { from: lastTrs.date } ]) :
-        this.monoDS.getTransactions(bank.token, [ { account: '0' } ]);
+      const accounts = this._formMonoTrRequest(cards);
+      const monoTransactions = this
+        .monoDS
+        .getTransactions(bank.token, accounts);
+      const transactions = this.db.getTransactions(cards);
+      // TODO: move to mono datasource
+      const newTransactions = [];
       for (const [acc, trs] of Object.entries(monoTransactions)) {
-        transactions.push(await trs);
+        const newTrs = await trs;
+        newTrs.forEach(tr => tr.bankCardId = acc);
+        newTransactions.push(...newTrs);
       }
-      this.db.setTransactions(monoTransactions);
+      this.db.setMonoTransactions(newTransactions);
       return {
-        transactions: transactions.push(monoTransactions),
+        transactions: transactions.concat(newTransactions),
         error: null
       };
     } catch (error) {
@@ -162,13 +149,32 @@ class LemonRepository {
     }
   }
 
+  _formMonoTrRequest(cards) {
+    const accounts = [];
+    cards.forEach(card => {
+      const trs = this.db.getLastTransaction(card);
+      if (!trs || new Date(trs.date) < lastMonth()) {
+        accounts.push({
+          account: card.id,
+          from: lastMonth(),
+        });
+      } else {
+        accounts.push({
+          account: card.id,
+          from: trs.date,
+        });
+      }
+    });
+    return accounts;
+  }
+
   /** @return Transaction */
-  setTransaction(transaction) {
+  setTransaction(transaction) { // eslint-disable-line
     //TODO: not yet implemented
   }
 
   /** @return boolean */
-  deleteTransaction(transaction) {
+  deleteTransaction(transaction) { // eslint-disable-line
     //TODO: not yet implemented
   }
 }

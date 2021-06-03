@@ -1,3 +1,4 @@
+/* eslint-disable */
 'use strict';
 
 /** @class LemonDB represents data access layer of the Lemon🍋 */
