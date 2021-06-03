@@ -1,4 +1,5 @@
 'use strict';
+/* eslint-disable */
 
 /** Makes transactions to bank API */
 class BankDataSource {
