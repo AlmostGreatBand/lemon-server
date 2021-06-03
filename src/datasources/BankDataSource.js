@@ -1,4 +1,5 @@
 'use strict';
+/* eslint-disable */
 
 /** Makes transactions to bank API */
 class BankDataSource {
@@ -11,4 +12,5 @@ class BankDataSource {
   }
 }
 
-module.exports = BankDataSource
+module.exports = BankDataSource;
+

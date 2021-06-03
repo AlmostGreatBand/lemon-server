@@ -1,9 +1,11 @@
 'use strict';
+/* eslint-disable camelcase */
 
 const assert = require('assert').strict;
 const http = require('http');
-const fs = require('fs');
 const createServer = require('../../src/testServer/testServer.js');
+const server = createServer(http);
+server.listen(8000);
 
 const url = 'http://localhost:8000/';
 const paths = [ 'profile/', 'cards/', 'transactions/', 'profile' ];
@@ -61,10 +63,10 @@ let counter = 0;
 const getOptions = credentials => {
   if (credentials === 'Unauthorized') return {};
   const credentialsBase64 = Buffer.from(credentials).toString('base64');
-  let options = { 
-      headers: { 
-        Authorization: `Basic ${ credentialsBase64 }` 
-      }
+  const options = {
+    headers: {
+      Authorization: `Basic ${credentialsBase64}`
+    }
   };
   return options;
 };
@@ -80,7 +82,7 @@ const checkStatusCode = (statusCode, expectedCode, path, credentials) => {
 
 const checkMsg = (msg, expected, path, credentials) => {
   assert.strictEqual(
-    JSON.parse(msg).error.toString(), `&#127819${expected}`, 
+    JSON.parse(msg).error.toString(), `&#127819${expected}`,
     `Wrong error msg, expected &#127819${expected}, got ${msg}
     Path: ${path}
     Credentials: ${credentials}`
@@ -89,9 +91,9 @@ const checkMsg = (msg, expected, path, credentials) => {
 
 const checkResponseData = (data, path) => {
   const expected = JSON.stringify(expectedResults[path]);
-  assert.strictEqual(data, expected, `Wrong response data, expected: 
-    ${expected}, 
-    got: 
+  assert.strictEqual(data, expected, `Wrong response data, expected:
+    ${expected},
+    got:
     ${data}
     Path: ${path}`);
 };
@@ -106,7 +108,7 @@ const logSuccess = (path, credentials, statusCode, responseData) => {
 const testRequest = async (path, test) => {
   counter++;
   const { credentials, code, expected } = test;
-  let options = getOptions(credentials);
+  const options = getOptions(credentials);
   const req = http.get(url + path, options, async res => {
     const { statusCode } = res;
     checkStatusCode(statusCode, code, path, credentials);
@@ -144,14 +146,11 @@ const testWrongPath = async () => {
   await testRequest(wrongPath, wrongPathTest);
 };
 
-const server = createServer(http);
-server.listen(8000);
-
 (async () => {
   try {
     await paths.forEach(testPath);
     await testWrongPath();
-  } catch(err) {
+  } catch (err) {
     console.error(err);
   }
 })();
