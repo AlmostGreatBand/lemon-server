@@ -58,7 +58,8 @@ class LemonRepository {
       return { ok: false, error: new Error('Wrong password') };
     }
     const ok = this.db.setBank(profile.account_id, bank);
-    return { ok, error: null };
+    if (!ok) return { ok, error: new Error('Database error') };
+    return setCards(bank);
   }
 
   /** @return Array<Card>, error */
@@ -74,19 +75,8 @@ class LemonRepository {
   }
 
   /** @return boolean, error */
-  async setCards(user) {
+  async setCards(bank) {
     try {
-      const profile = this.db.getAccount(user.login);
-      if (!profile) {
-        return { ok: false, error: new Error('Account Not Found') };
-      }
-      if (user.password !== profile.password) {
-        return { ok: false, error: new Error('Wrong password') };
-      }
-      const bank = this.db.getMonobank(profile);
-      if (!bank) {
-        return { ok: false, error: new Error('No cards present') };
-      }
       const monoCards = await this.monoDS.getAccounts(bank.token);
       const monoAccounts = monoCards.accounts;
       const ok = this.db.setMonoCards(monoAccounts, profile);

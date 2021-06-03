@@ -28,7 +28,7 @@ const authorizeUser = (req, res) => {
 };
 
 const createServer = (protocol, options) => (
-  protocol.createServer(options, (req, res) => {
+  protocol.createServer(options, async (req, res) => {
     const credentials = authorizeUser(req, res);
     if (!credentials) return;
     const handler = routing[req.method][normalizePath(req.url)];
@@ -45,13 +45,13 @@ const createServer = (protocol, options) => (
       req.on('data', chunk => {
           body += chunk.toString();
       });
-      req.on('end', () => {
-        const { code, data } = handler(user, body);
+      req.on('end', async () => {
+        const { code, data } = await handler(user, body);
         res.writeHead(code);
         res.end(JSON.stringify(data));
       })
     } else {
-      const { code, data } = handler(user);
+      const { code, data } = await handler(user);
       res.writeHead(code);
       res.end(JSON.stringify(data));
     }
