@@ -13,4 +13,3 @@ class BankDataSource {
 }
 
 module.exports = BankDataSource;
-
