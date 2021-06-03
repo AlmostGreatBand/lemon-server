@@ -2,6 +2,10 @@
 'use strict';
 
 const db = require('./db.js');
+const {
+  monoCardCopy,
+  monoTrCopy
+} = require('./dbutils');
 
 const getAccount = login => (
   db.accounts.find(acc => acc.login === login)
@@ -41,8 +45,12 @@ const getLastTransaction = card => {
   return latestTransaction;
 };
 
-const setTransactions = transactions => {
-  db.transactions.push(transactions);
+const setMonoTransactions = transactions => {
+  transactions.forEach(tr => {
+    tr.transaction_id = db.transactions.length + 1;
+    tr = monoTrCopy;
+  });
+  db.transactions.push(...transactions);
 };
 
 const updateAccount = user => {
@@ -62,17 +70,6 @@ const getMonobank = user => (
   getBanks(user.account_id).filter(bank => bank.name === 'mono')
 );
 
-const _monoCopy = card => ({
-  card_id: card.card_id,
-  bank_id: card.bank_id,
-  bank: card.bank,
-  card_num: card.maskedPan,
-  type: card.type,
-  balance: card.balance,
-  currency: card.cashbackType,
-  token: ''
-});
-
 const setMonoCards = (cards, user) => {
   const bank = getMonobank(user);
   const allCards = getCards(user.account_id);
@@ -80,9 +77,9 @@ const setMonoCards = (cards, user) => {
     card.bank_id = bank.bank_id;
     card.card_id = allCards[allCards.length - 1].card_id + 1;
     card.bank = 'mono';
-    _monoCopy(card);
+    card = monoCardCopy(card);
   });
-  db.cards.push(cards);
+  db.cards.push(...cards);
   return true;
 };
 
@@ -116,5 +113,5 @@ module.exports = {
   setBank,
   getCardTransactions,
   getLastTransaction,
-  setTransactions
+  setMonoTransactions
 };
