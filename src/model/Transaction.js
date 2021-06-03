@@ -1,3 +1,5 @@
+'use strict';
+
 /** Represents transaction with card
  *
  * @property {number} cardId - Card's id in Lemon DB.

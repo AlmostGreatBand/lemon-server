@@ -1,3 +1,5 @@
+'use strict';
+
 const fs = require('fs');
 const xmlJs = require('xml-js');
 const transactionsXML = fs.readFileSync('./xml_data/transactions.xml', 'utf-8');

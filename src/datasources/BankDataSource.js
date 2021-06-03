@@ -1,3 +1,5 @@
+'use strict';
+
 /** Makes transactions to bank API */
 class BankDataSource {
   /** Obtains transactions from card
@@ -9,4 +11,4 @@ class BankDataSource {
   }
 }
 
-module.exports = BankDataSource
+module.exports = BankDataSource;

@@ -1,3 +1,5 @@
+'use strict';
+
 const http = require('https');
 const xmlJs = require('xml-js');
 const crypto = require('crypto');
@@ -8,201 +10,174 @@ const {
   dateToString,
   divideIntoPeriods
 } = require('./utils/dates');
-const { BankDataSource } = require('../BankDataSource');
 
-const createSignature = (xml, password) => {
-  const regexp = /(?<=<data>).*(?=<\/data)/;
-  const dataString = xml.match(regexp)[0];
-  const md5Signature = crypto.createHash('md5')
-    .update(`${dataString}${password}`, 'utf8')
-    .digest('hex');
-  const signature = crypto.createHash('sha1')
-    .update(md5Signature, 'utf8')
-    .digest('hex');
-  return signature;
-};
+const BankDataSource = require('../BankDataSource');
 
-const fillXmlWithSignature = (xml, signature) => {
-  const xmlObj = xmlJs.xml2js(xml, { compact: true });
-
-  const xmlMerchant = xmlObj.request.merchant;
-  xmlMerchant.signature._text = signature;
-
-  const xmlWithSignature = xmlJs.js2xml(xmlObj, {
-    spaces: 0,
-    compact: true,
-    fullTagEmptyElement: true
-  });
-  return xmlWithSignature;
-};
-
-const handleBankResponse = (cb, resolve, reject, res) => {
-  let data = '';
-  if (res.statusCode !== 200) {
-    const errMsg = `Server did not send data. STATUS CODE: ${res.statusCode}`;
-    reject(new Error(errMsg));
-  }
-  res.setEncoding('utf8');
-  res.on('data', chunk => {
-    data += chunk;
-  });
-  res.on('end', () => {
-    cb(resolve, reject, data);
-  });
-  res.on('error', err => reject(err));
-};
-
-const handleTransactionsData = (resolve, reject, dataXml) => {
-  let dataObj;
-  try {
-    dataObj = xmlJs.xml2js(dataXml, { compact: true });
-  } catch (err) {
-    reject(new Error(err));
-    return;
-  }
-
-  if (dataObj.response.data.error !== null) {
-    const errorMessage = dataObj.response.data.error._attributes.message;
-    reject(new Error(errorMessage));
-    return;
-  }
-
-  const result = [];
-  let transactions = dataObj.response.data.info.statements.statement;
-  if (!Array.isArray(transactions)) transactions = [transactions];
-  transactions.map(val => result.push(val._attributes));
-  resolve(result);
-};
-
-const handleBalanceData = (resolve, reject, dataXml) => {
-  let dataObj;
-  try {
-    dataObj = xmlJs.xml2js(dataXml, { compact: true });
-  } catch (err) {
-    reject(new Error('Invalid XML'));
-    return;
-  }
-
-  if (dataObj.response.data.error !== null) {
-    const errorMessage = dataObj.response.data.error._attributes.message;
-    reject(new Error(errorMessage));
-    return;
-  }
-  const cardBalance = dataObj.response.data.info.cardbalance;
-  const card = cardBalance.card;
-
-  const result = {
-    cardNumber: card.card_number._text,
-    currency: card.currency._text,
-    balance: cardBalance.balance._text,
-    availableBalance: cardBalance.av_balance._text,
-    dateBalance: cardBalance.bal_date._text,
-    creditLimit: cardBalance.fin_limit._text
-  };
-  resolve(result);
-};
-
-const getData = (dataForRequest, cb) => {
-  const path = cb.name === 'handleTransactionsData' ? '/p24api/rest_fiz' :
-    cb.name === 'handleBalanceData' ? '/p24api/balance' :
-      null;
-  const options = {
-    hostname: 'api.privatbank.ua',
-    path,
-    method: 'POST',
-    headers:
-        { 'Content-Type': 'application/xml; charset=UTF-8' }
-  };
-  const req = http.request(options);
-  const xml = cb.name === 'handleTransactionsData' ?
-    fillTransactionsXml(dataForRequest) :
-    cb.name === 'handleBalanceData' ? fillBalanceXml(dataForRequest) :
-      null;
-
-  const signature = createSignature(xml, dataForRequest.merchantPassword);
-  const xmlWithSignature = fillXmlWithSignature(xml, signature);
-  req.write(xmlWithSignature);
-  req.end();
-
-  return new Promise((resolve, reject) => {
-    req.on('response', handleBankResponse.bind(null, cb, resolve, reject));
-    req.on('error', err => reject(err));
-  });
-};
-
-const getTransactionsData = async dataForTransactions => {
-  const startDate = stringToDate(dataForTransactions.startDate);
-  const endDate = stringToDate(dataForTransactions.endDate);
-
-  const periods = divideIntoPeriods(startDate, endDate);
-  const promises = [];
-
-  periods.forEach((period, index) => {
-    const copyDataForTransactions = Object.assign({}, dataForTransactions);
-    copyDataForTransactions.startDate = dateToString(period[0]);
-    copyDataForTransactions.endDate = dateToString(period[1]);
-    promises[index] = getData(copyDataForTransactions, handleTransactionsData);
-  });
-  const transactions = await Promise.all(promises);
-
-  let result = [];
-  for (const array of transactions) result = [...result, ...array.reverse()];
-
-  return result;
-};
-
-const getBalanceData = async dataForBalance => {
-  const result = [];
-  for (const data of dataForBalance) {
-    result.push(getData(data, handleBalanceData));
-  }
-  return Promise.allSettled(Object.values(result));
-};
-
-const dataForTransactionsRequest = { // sample data for transactions request
-  merchantPassword: '55x3Ft9C96yx7s1cAMO2KVn1apuDA0X6',
-  merchantId: 123456,
-  wait: 10,
-  test: 0,
-  paymentId: '',
-  startDate: '11.05.2020',
-  endDate: '23.10.2020',
-  cardNumber: '1234567890123456'
-};
-
-const dataForBalanceRequest = { // sample data for balance request
-  merchantPassword: '55x3Ft9C96yx7s1cAMO2KVn1apuDA0X6',
-  merchantId: 123456,
-  wait: 10,
-  test: 0,
-  paymentId: '',
-  cardNumber: '1234567890123456',
-  country: 'UA'
-};
-
-// example of using
-(async () => {
-  const tranData = await getTransactionsData(dataForTransactionsRequest);
-  const balanceData = await getBalanceData([dataForBalanceRequest]);
-  // dataForBalanceRequest is array of data objects
-  console.log(tranData);
-  console.log(balanceData);
-})();
-
-// just to implement the interface
 class PrivatDataSource extends BankDataSource {
   constructor() {
     super();
   }
+
+  createSignature(xml, password) {
+    const regexp = /(?<=<data>).*(?=<\/data)/;
+    const dataString = xml.match(regexp)[0];
+    const md5Signature = crypto.createHash('md5')
+      .update(`${dataString}${password}`, 'utf8')
+      .digest('hex');
+    const signature = crypto.createHash('sha1')
+      .update(md5Signature, 'utf8')
+      .digest('hex');
+    return signature;
+  }
+
+  fillXmlWithSignature(xml, signature) {
+    const xmlObj = xmlJs.xml2js(xml, { compact: true });
+
+    const xmlMerchant = xmlObj.request.merchant;
+    xmlMerchant.signature._text = signature;
+
+    const xmlWithSignature = xmlJs.js2xml(xmlObj, {
+      spaces: 0,
+      compact: true,
+      fullTagEmptyElement: true
+    });
+    return xmlWithSignature;
+  }
+
+  handleBankResponse(cb, resolve, reject, res) {
+    let data = '';
+    if (res.statusCode !== 200) {
+      const errMsg = `Server did not send data. STATUS CODE: ${res.statusCode}`;
+      reject(new Error(errMsg));
+    }
+    res.setEncoding('utf8');
+    res.on('data', chunk => {
+      data += chunk;
+    });
+    res.on('end', () => {
+      cb(resolve, reject, data);
+    });
+    res.on('error', err => reject(err));
+  }
+
+  handleTransactionsData(resolve, reject, dataXml) {
+    let dataObj;
+    try {
+      dataObj = xmlJs.xml2js(dataXml, { compact: true });
+    } catch (err) {
+      reject(new Error(err));
+      return;
+    }
+
+    if (dataObj.response.data.error !== null) {
+      const errorMessage = dataObj.response.data.error._attributes.message;
+      reject(new Error(errorMessage));
+      return;
+    }
+
+    const result = [];
+    let transactions = dataObj.response.data.info.statements.statement;
+    if (!Array.isArray(transactions)) transactions = [transactions];
+    transactions.map(val => result.push(val._attributes));
+    resolve(result);
+  }
+
+  handleBalanceData(resolve, reject, dataXml) {
+    let dataObj;
+    try {
+      dataObj = xmlJs.xml2js(dataXml, { compact: true });
+    } catch (err) {
+      reject(new Error('Invalid XML'));
+      return;
+    }
+
+    if (dataObj.response.data.error !== null) {
+      const errorMessage = dataObj.response.data.error._attributes.message;
+      reject(new Error(errorMessage));
+      return;
+    }
+    const cardBalance = dataObj.response.data.info.cardbalance;
+    const card = cardBalance.card;
+
+    const result = {
+      cardNumber: card.card_number._text,
+      currency: card.currency._text,
+      balance: cardBalance.balance._text,
+      availableBalance: cardBalance.av_balance._text,
+      dateBalance: cardBalance.bal_date._text,
+      creditLimit: cardBalance.fin_limit._text
+    };
+    resolve(result);
+  }
+
+  getData(dataForRequest, cb, path, xml) {
+    const options = {
+      hostname: 'api.privatbank.ua',
+      path,
+      method: 'POST',
+      headers:
+          { 'Content-Type': 'application/xml; charset=UTF-8' }
+    };
+    const req = http.request(options);
+
+    const password = dataForRequest.merchantPassword;
+    const signature = this.createSignature(xml, password);
+    const xmlWithSignature = this.fillXmlWithSignature(xml, signature);
+    req.write(xmlWithSignature);
+    req.end();
+
+    return new Promise((resolve, reject) => {
+      const handler = this.handleBankResponse.bind(this, cb, resolve, reject);
+      req.on('response', handler);
+      req.on('error', err => reject(err));
+    });
+  }
+
+  async getTransactionsData(dataForTransactions) {
+    const startDate = stringToDate(dataForTransactions.startDate);
+    const endDate = stringToDate(dataForTransactions.endDate);
+
+    const periods = divideIntoPeriods(startDate, endDate);
+    const promises = [];
+
+    const path = '/p24api/rest_fiz';
+    const xml = fillTransactionsXml(dataForTransactions);
+    const cb = this.handleTransactionsData.bind(this);
+
+    periods.forEach(period => {
+      const copyDataForTransactions = Object.assign({}, dataForTransactions);
+      copyDataForTransactions.startDate = dateToString(period[0]);
+      copyDataForTransactions.endDate = dateToString(period[1]);
+      promises.push(this.getData(copyDataForTransactions, cb, path, xml));
+    });
+    const transactions = await Promise.all(promises);
+
+    const result = [];
+    transactions.forEach(arr => result.push(...arr.reverse()));
+
+    return result;
+  }
+
+  async getBalanceData(dataForBalance) {
+    const result = [];
+    const path = '/p24api/balance';
+    const xml = fillBalanceXml(dataForBalance);
+    const cb = this.handleBalanceData.bind(this);
+    for (const data of dataForBalance) {
+      result.push(this.getData(data, cb, path, xml));
+    }
+    return Promise.all(result);
+  }
+
   // conf is similar to dataForTransactionsRequest
   async getTransactions(card, conf) {
     conf.cardNumber = card.cardNum + '';
-    return await getTransactionsData(conf);
+    return this.getTransactionsData(conf);
   }
-  // additional method for getting balances of cards array
-  // conf is array of objects similar to dataForBalanceRequest
+  /* additional method for getting balances of cards array
+     conf is array of objects similar to dataForBalanceRequest */
   async getBalance(conf) {
-    return await getBalanceData(conf);
+    return this.getBalanceData(conf);
   }
 }
 
