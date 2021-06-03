@@ -1,10 +1,6 @@
 'use strict';
 /* eslint-disable camelcase */
-const supportedBanks = {
-  MONO: 'Mono',
-  PRIVAT: 'Privat',
-  CASH: 'Cash',
-};
+const supportedBanks = require('../datasources/supportedBanks');
 
 module.exports = {
   accounts: [{
