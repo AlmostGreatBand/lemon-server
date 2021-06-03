@@ -9,4 +9,4 @@ class BankDataSource {
   }
 }
 
-module.exports = { BankDataSource };
+module.exports = BankDataSource
