@@ -74,14 +74,11 @@ class LemonRepository {
   }
 
   /** @return boolean, error */
-  async setCard(user) {
+  async setCards(user) {
     try {
       const profile = this.db.getAccount(user.login);
       if (!profile) {
         return { ok: false, error: new Error('Account Not Found') };
-      }
-      if (!profile.token) {
-        return { ok: false, error: new Error('Account Has No Token') };
       }
       if (user.password !== profile.password) {
         return { ok: false, error: new Error('Wrong password') };
@@ -115,9 +112,6 @@ class LemonRepository {
       const profile = this.db.getAccount(user.login);
       if (!profile) {
         return { transactions: null, error: new Error('Account Not Found') };
-      }
-      if (!profile.token) {
-        return { transactions: null, error: new Error('Account Has No Token') };
       }
       if (user.password !== profile.password) {
         return { transactions: null, error: new Error('Wrong password') };

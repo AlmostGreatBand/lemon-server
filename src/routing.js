@@ -88,7 +88,11 @@ const routing = {
   'POST': {
     '/': () => makeResponse(200, 'Welcome to Lemon&#127819 Server!'),
     '/profile/': (user, newInfo) => changeUserInfo(user, newInfo),
-    '/cards/': user => setCards(user),
+    '/banks/add/': async (user, bank) => {
+      const res = setBank(user, bank);
+      if (res.error) return res;
+      return await setCards(user);
+    },
     '/transactions/': (user, transaction) => addTransaction(user, transaction),
     '/registration/': (_, user) => registerUser(user),
   },
