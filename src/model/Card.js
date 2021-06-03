@@ -4,7 +4,8 @@
  *
  * @property {number} cardId - Card's id in Lemon DB.
  * @property {string} bank - Name of the bank card belongs to
- * @property {number} cardNum - Card number (can be either all number or last 4 digits only)
+ * @property {number} cardNum - Card number.
+ * Can be either all number or last 4 digits only
  * @property {string} type - Card type in bank's system
  * @property {number} balance - Amount of money on card in lowest units
  * @property {string} currency - Currency of transactions from this cards */
@@ -18,3 +19,5 @@ class Card {
     this.currency = currency;
   }
 }
+
+module.exports = Card;
