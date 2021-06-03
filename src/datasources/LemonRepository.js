@@ -82,17 +82,17 @@ class LemonRepository {
     try {
       const profile = this.db.getAccount(user.login);
       if (!profile) {
-        throw new Error('Account Not Found');
+        return { ok: false, error: new Error('Account Not Found') };
       }
       if (!profile.token) {
-        throw new Error('Account Has No Token');
+        return { ok: false, error: new Error('Account Has No Token') };
       }
       if (user.password !== profile.password) {
-        throw new Error('Wrong password');
+        return { ok: false, error: new Error('Wrong password') };
       }
       const bank = this.db.getMonobank(profile);
       if (!bank) {
-        throw new Error('No cards present');
+        return { ok: false, error: new Error('No cards present') };
       }
       const monoCards = await this.monoDS.getAccounts(bank.token);
       const monoAccounts = monoCards.accounts;
