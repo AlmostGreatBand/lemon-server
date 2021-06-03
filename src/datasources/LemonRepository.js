@@ -42,10 +42,10 @@ class LemonRepository {
     if (profile) {
       return {
         ok: false,
-        error: new Error(`Account with login ${user.login} already exists`)
+        error: new Error(`Account with login ${profile.login} already exists`)
       };
     }
-    const ok = this.db.setAccount(user);
+    const ok = this.db.setAccount();
     return { ok, error: null };
   }
 

@@ -121,7 +121,7 @@ const testRequest = async (path, test) => {
       logSuccess(path, credentials, statusCode, data);
       if (counter <= 0) server.close(() => console.log('Tests finished'));
       return;
-    };
+    }
     res.on('data', msg => {
       counter--;
       checkMsg(msg, expected, path, credentials);
