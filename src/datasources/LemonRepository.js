@@ -58,7 +58,8 @@ class LemonRepository {
       return { ok: false, error: new Error('Wrong password') };
     }
     const ok = this.db.setBank(profile.account_id, bank);
-    return { ok, error: null };
+    if (!ok) return { ok, error: new Error('Database error') };
+    return setCards(bank);
   }
 
   /** @return Array<Card>, error */
@@ -74,22 +75,8 @@ class LemonRepository {
   }
 
   /** @return boolean, error */
-  async setCard(user) {
+  async setCards(bank) {
     try {
-      const profile = this.db.getAccount(user.login);
-      if (!profile) {
-        return { ok: false, error: new Error('Account Not Found') };
-      }
-      if (!profile.token) {
-        return { ok: false, error: new Error('Account Has No Token') };
-      }
-      if (user.password !== profile.password) {
-        return { ok: false, error: new Error('Wrong password') };
-      }
-      const bank = this.db.getMonobank(profile);
-      if (!bank) {
-        return { ok: false, error: new Error('No cards present') };
-      }
       const monoCards = await this.monoDS.getAccounts(bank.token);
       const monoAccounts = monoCards.accounts;
       const ok = this.db.setMonoCards(monoAccounts, profile);
@@ -114,17 +101,14 @@ class LemonRepository {
     try {
       const profile = this.db.getAccount(user.login);
       if (!profile) {
-        throw new Error('Account Not Found');
-      }
-      if (!profile.token) {
-        return { transactions: null, error: new Error('Account Has No Token') };
+        return { transactions: null, error: new Error('Account Not Found') };
       }
       if (user.password !== profile.password) {
-        throw new Error('Wrong password');
+        return { transactions: null, error: new Error('Wrong password') };
       }
       const bank = this.db.getMonobank(profile);
       if (!bank) {
-        throw new Error('No cards present');
+        return { transactions: null, error: new Error('No cards present') };
       }
       const cards = this.db.getCards(profile.account_id);
       const accounts = this._formMonoTrRequest(cards);
