@@ -86,6 +86,13 @@ const addTransaction = (user, transaction) => {
   return serverErrorResponse;
 };
 
+const routesForUnregisteredAccess = [
+  '/',
+  '/registration/',
+];
+
+const authorizationRequired = route => !routesForUnregisteredAccess.includes(route);
+
 const routing = {
   'GET': {
     '/': () => makeResponse(200, 'Welcome to Lemon&#127819 Server!'),
@@ -103,4 +110,4 @@ const routing = {
   },
 };
 
-module.exports = routing;
+module.exports = Object.freeze({ routing, authorizationRequired });
