@@ -28,6 +28,14 @@ const getProfile = user => {
   return serverErrorResponse;
 };
 
+const signIn = user => {
+  if (!authentificate(user)) return badRequestResponse;
+  const { profile, error } = repository.getUserInfo(user);
+  if (!error) return makeResponse(200, '&#127819Login successful');
+  if (expectedUserErrors.includes(error.message)) return userErrorResponse;
+  return serverErrorResponse;
+};
+
 const getCards = user => {
   if (!authentificate(user)) return badRequestResponse;
   const { cards, error } = repository.getCards(user);
@@ -84,6 +92,7 @@ const routing = {
     '/profile/': user => getProfile(user),
     '/cards/': user => getCards(user),
     '/transactions/': user => getTransactions(user),
+    '/login/': user => signIn(user),
   },
   'POST': {
     '/': () => makeResponse(200, 'Welcome to Lemon&#127819 Server!'),
