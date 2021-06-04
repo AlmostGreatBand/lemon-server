@@ -110,6 +110,9 @@ class LemonRepository {
       if (!bank) {
         return { transactions: null, error: new Error('No cards present') };
       }
+      if (!bank.token) {
+        return { transactions: null, error: new Error('Account Has No Token') };
+      }
       const cards = this.db.getCards(profile.account_id);
       const accounts = this._formMonoTrRequest(cards);
       const monoTransactions = this

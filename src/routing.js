@@ -36,9 +36,9 @@ const getCards = user => {
   return serverErrorResponse;
 };
 
-const getTransactions = user => {
+const getTransactions = async user => {
   if (!authentificate(user)) return badRequestResponse;
-  const { transactions, error } = repository.getTransactions(user);
+  const { transactions, error } = await repository.getTransactions(user);
   if (!error) return makeResponse(200, { transactions });
   if (expectedUserErrors.includes(error.message)) return userErrorResponse;
   return serverErrorResponse;
