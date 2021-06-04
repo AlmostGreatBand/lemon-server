@@ -91,9 +91,9 @@ const checkMsg = (msg, expected, path, credentials) => {
 
 const checkResponseData = (data, path) => {
   const expected = JSON.stringify(expectedResults[path]);
-  assert.strictEqual(data, expected, `Wrong response data, expected: 
-    ${expected}, 
-    got: 
+  assert.strictEqual(data, expected, `Wrong response data, expected:
+    ${expected},
+    got:
     ${data}
     Path: ${path}`);
 };
